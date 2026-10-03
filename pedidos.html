@@ -1,0 +1,16 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mis Pedidos - NJ Premium</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet"><style>:root{--a:#22c55e;--bg:#060d09;--card:#0d1a12;--b:#1c3526;--mut:#8fb89f}*{box-sizing:border-box;margin:0;font-family:Inter,system-ui}body{background:var(--bg);color:#fff}.nav{padding:14px 16px;border-bottom:1px solid var(--b);display:flex;align-items:center;gap:12px;position:sticky;top:0;background:#060d09}.wrap{max-width:600px;margin:auto;padding:16px}.card{background:var(--card);border:1px solid var(--b);border-radius:14px;padding:16px;margin-bottom:12px}.back{background:#0a150e;border:1px solid var(--b);color:#fff;padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:700}.btn{background:var(--a);color:#041008;border:0;padding:10px 16px;border-radius:10px;font-weight:800;cursor:pointer;width:100%}</style></head><body>
+<div class="nav"><button class="back" onclick="location.href='index.html'">← Volver</button><b>📦 Mis Pedidos</b></div>
+<div class="wrap" id="list"><div class="card">Cargando...</div></div>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";import {getFirestore,collection,query,where,orderBy,limit,onSnapshot} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";import {getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,setPersistence,browserLocalPersistence} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+const db=getFirestore(initializeApp({apiKey:"AIzaSyA3LaesYHXylgoXtHCJWwmo_Ucl6SdZlpc",authDomain:"my-project-modz.firebaseapp.com",projectId:"my-project-modz"}));const auth=getAuth();await setPersistence(auth,browserLocalPersistence);
+const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtDate=d=>{try{let f=d?.toDate?d.toDate():new Date(d);return f.toLocaleString();}catch(e){return '';}};
+window.loginGoogle=async()=>{await signInWithPopup(auth,new GoogleAuthProvider());};
+window.logout=()=>auth.signOut();
+onAuthStateChanged(auth,user=>{
+if(!user){document.getElementById('list').innerHTML=`<div class="card" style="text-align:center"><div style="font-size:40px">📦</div><b>Inicia sesión</b><br><br><button class="btn" onclick="loginGoogle()">Continuar con Google</button></div>`;return;}
+const q=query(collection(db,"orders"),where("uid","==",user.uid),orderBy("date","desc"),limit(50));
+onSnapshot(q,s=>{let arr=[];s.forEach(d=>arr.push(d.data()));document.getElementById('list').innerHTML=(arr.length?arr.map(x=>`<div class="card"><b>${esc(x.service)}</b><span style="float:right;color:${x.status==='done'?'#22c55e':'#f59e0b'}">${esc(x.status||'pending')}</span><br><small style="color:#8fb89f">₲${Number(x.total_gs||0).toLocaleString()} • ${fmtDate(x.date)}</small></div>`).join(''):'<div class="card">Sin pedidos.</div>')+`<button class="back" onclick="logout()" style="width:100%;margin-top:8px">Salir</button>`;},e=>{document.getElementById('list').innerHTML=`<div class="card">⚠️ Falta índice en Firestore<br><small>${esc(e.message)}</small></div>`;});
+});
+</script></body></html>
